@@ -399,7 +399,7 @@ Same, except UI origin is localhost and allowlisted.
 
 ```bash
 curl -H "Origin: https://app.example.com" \
-     http://127.0.0.1:8787/v1/meta
+     http://127.0.0.1:8790/v1/meta
 ```
 
 ### Clone
@@ -410,7 +410,7 @@ curl -X POST \
   -H "Authorization: Bearer <TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{"repoUrl":"git@github.com:owner/repo.git","destRelative":"owner/repo"}' \
-  http://127.0.0.1:8787/v1/git/clone
+  http://127.0.0.1:8790/v1/git/clone
 ```
 
 ### Stream job logs (SSE)
@@ -419,7 +419,7 @@ curl -X POST \
 curl -N \
   -H "Origin: https://app.example.com" \
   -H "Authorization: Bearer <TOKEN>" \
-  http://127.0.0.1:8787/v1/jobs/<JOB_ID>/stream
+  http://127.0.0.1:8790/v1/jobs/<JOB_ID>/stream
 ```
 
 ---

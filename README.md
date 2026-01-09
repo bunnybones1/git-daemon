@@ -39,7 +39,7 @@ npm install
 npm run daemon
 ```
 
-The daemon listens on `http://127.0.0.1:8787` by default.
+The daemon listens on `http://127.0.0.1:8790` by default.
 
 ## Pairing flow
 
@@ -51,7 +51,7 @@ Pairing is required before using protected endpoints.
 curl -H "Origin: https://app.example.com" \
   -H "Content-Type: application/json" \
   -d '{"step":"start"}' \
-  http://127.0.0.1:8787/v1/pair
+  http://127.0.0.1:8790/v1/pair
 ```
 
 2. Confirm pairing with the code:
@@ -60,7 +60,7 @@ curl -H "Origin: https://app.example.com" \
 curl -H "Origin: https://app.example.com" \
   -H "Content-Type: application/json" \
   -d '{"step":"confirm","code":"<CODE>"}' \
-  http://127.0.0.1:8787/v1/pair
+  http://127.0.0.1:8790/v1/pair
 ```
 
 The response includes `accessToken` to use as `Authorization: Bearer <token>`.
@@ -71,7 +71,7 @@ Check meta:
 
 ```bash
 curl -H "Origin: https://app.example.com" \
-  http://127.0.0.1:8787/v1/meta
+  http://127.0.0.1:8790/v1/meta
 ```
 
 Clone a repo (job):
@@ -82,7 +82,7 @@ curl -X POST \
   -H "Authorization: Bearer <TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{"repoUrl":"git@github.com:owner/repo.git","destRelative":"owner/repo"}' \
-  http://127.0.0.1:8787/v1/git/clone
+  http://127.0.0.1:8790/v1/git/clone
 ```
 
 Stream job logs (SSE):
@@ -91,7 +91,7 @@ Stream job logs (SSE):
 curl -N \
   -H "Origin: https://app.example.com" \
   -H "Authorization: Bearer <TOKEN>" \
-  http://127.0.0.1:8787/v1/jobs/<JOB_ID>/stream
+  http://127.0.0.1:8790/v1/jobs/<JOB_ID>/stream
 ```
 
 ## Configuration

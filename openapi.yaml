@@ -6,7 +6,7 @@ info:
     Localhost API for the Git Daemon. All requests must include an Origin header
     that matches the allowlist. Non-public endpoints require a Bearer token.
 servers:
-  - url: http://127.0.0.1:8787
+  - url: http://127.0.0.1:8790
 security:
   - bearerAuth: []
 paths:

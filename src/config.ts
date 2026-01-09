@@ -26,7 +26,7 @@ export const defaultConfig = (): AppConfig => ({
   configVersion: CONFIG_VERSION,
   server: {
     host: "127.0.0.1",
-    port: 8787,
+    port: 8790,
   },
   originAllowlist: ["https://app.example.com"],
   workspaceRoot: null,

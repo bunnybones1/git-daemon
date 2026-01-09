@@ -3,7 +3,7 @@ import { promises as fs } from "fs";
 import pino from "pino";
 import pinoHttp from "pino-http";
 import type { Logger } from "pino";
-import rfs from "rotating-file-stream";
+import { createStream } from "rotating-file-stream";
 import type { AppConfig } from "./types";
 
 export const createLogger = async (
@@ -14,7 +14,7 @@ export const createLogger = async (
   const logDir = path.join(configDir, logging.directory);
   await fs.mkdir(logDir, { recursive: true });
 
-  const stream = rfs.createStream("daemon.log", {
+  const stream = createStream("daemon.log", {
     size: `${logging.maxBytes}B`,
     maxFiles: logging.maxFiles,
     path: logDir,
