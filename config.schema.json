@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schemas/git-daemon-config.schema.json",
+  "title": "Git Daemon Config",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "configVersion",
+    "server",
+    "originAllowlist",
+    "logging",
+    "jobs",
+    "deps",
+    "pairing",
+    "approvals"
+  ],
+  "properties": {
+    "configVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "server": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "host",
+        "port"
+      ],
+      "properties": {
+        "host": {
+          "type": "string",
+          "default": "127.0.0.1"
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "default": 8787
+        }
+      }
+    },
+    "originAllowlist": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "format": "uri"
+      }
+    },
+    "workspaceRoot": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Absolute path to the workspace root. Null means not yet configured."
+    },
+    "pairing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tokenTtlDays"
+      ],
+      "properties": {
+        "tokenTtlDays": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 365,
+          "default": 30
+        }
+      }
+    },
+    "jobs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maxConcurrent",
+        "timeoutSeconds"
+      ],
+      "properties": {
+        "maxConcurrent": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "minimum": 60,
+          "default": 3600
+        }
+      }
+    },
+    "deps": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "defaultSafer"
+      ],
+      "properties": {
+        "defaultSafer": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "logging": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "directory",
+        "maxFiles",
+        "maxBytes"
+      ],
+      "properties": {
+        "directory": {
+          "type": "string",
+          "default": "logs"
+        },
+        "maxFiles": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 5
+        },
+        "maxBytes": {
+          "type": "integer",
+          "minimum": 1024,
+          "default": 5242880
+        }
+      }
+    },
+    "approvals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "entries"
+      ],
+      "properties": {
+        "entries": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "origin",
+              "repoPath",
+              "capabilities",
+              "approvedAt"
+            ],
+            "properties": {
+              "origin": {
+                "type": "string",
+                "format": "uri"
+              },
+              "repoPath": {
+                "type": "string"
+              },
+              "capabilities": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "open-terminal",
+                    "open-vscode",
+                    "deps/install"
+                  ]
+                }
+              },
+              "approvedAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

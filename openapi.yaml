@@ -1,0 +1,678 @@
+openapi: 3.0.3
+info:
+  title: Git Daemon API
+  version: 0.1.0
+  description: |
+    Localhost API for the Git Daemon. All requests must include an Origin header
+    that matches the allowlist. Non-public endpoints require a Bearer token.
+servers:
+  - url: http://127.0.0.1:8787
+security:
+  - bearerAuth: []
+paths:
+  /v1/meta:
+    get:
+      summary: Get daemon status and capabilities
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/OriginHeader'
+      responses:
+        '200':
+          description: Daemon status and capabilities
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetaResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v1/pair:
+    post:
+      summary: Start or confirm pairing
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/OriginHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PairRequest'
+      responses:
+        '200':
+          description: Pairing response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PairResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v1/jobs/{id}:
+    get:
+      summary: Get job status
+      parameters:
+        - $ref: '#/components/parameters/OriginHeader'
+        - $ref: '#/components/parameters/JobId'
+      responses:
+        '200':
+          description: Job status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobStatus'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v1/jobs/{id}/stream:
+    get:
+      summary: Stream job logs and events (SSE)
+      parameters:
+        - $ref: '#/components/parameters/OriginHeader'
+        - $ref: '#/components/parameters/JobId'
+      responses:
+        '200':
+          description: Server-sent events stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                example: |
+                  data: {"type":"log","stream":"stdout","line":"Cloning into..."}
+
+                  data: {"type":"progress","kind":"git","percent":42,"detail":"receiving objects"}
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v1/jobs/{id}/cancel:
+    post:
+      summary: Request job cancellation
+      parameters:
+        - $ref: '#/components/parameters/OriginHeader'
+        - $ref: '#/components/parameters/JobId'
+      responses:
+        '200':
+          description: Cancellation accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CancelResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v1/git/clone:
+    post:
+      summary: Clone a repository
+      parameters:
+        - $ref: '#/components/parameters/OriginHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GitCloneRequest'
+      responses:
+        '202':
+          description: Job created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v1/git/fetch:
+    post:
+      summary: Fetch from a remote without pulling
+      parameters:
+        - $ref: '#/components/parameters/OriginHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GitFetchRequest'
+      responses:
+        '202':
+          description: Job created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v1/git/status:
+    get:
+      summary: Get repository status
+      parameters:
+        - $ref: '#/components/parameters/OriginHeader'
+        - $ref: '#/components/parameters/RepoPath'
+      responses:
+        '200':
+          description: Repository status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GitStatus'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v1/os/open:
+    post:
+      summary: Open a folder, terminal, or VS Code
+      parameters:
+        - $ref: '#/components/parameters/OriginHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OsOpenRequest'
+      responses:
+        '200':
+          description: Open action accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v1/deps/install:
+    post:
+      summary: Install dependencies
+      parameters:
+        - $ref: '#/components/parameters/OriginHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DepsInstallRequest'
+      responses:
+        '202':
+          description: Job created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v1/diagnostics:
+    get:
+      summary: Get diagnostics bundle metadata
+      parameters:
+        - $ref: '#/components/parameters/OriginHeader'
+      responses:
+        '200':
+          description: Diagnostics data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiagnosticsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: token
+  parameters:
+    OriginHeader:
+      name: Origin
+      in: header
+      required: true
+      schema:
+        type: string
+      description: Must match the configured origin allowlist.
+    JobId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    RepoPath:
+      name: repoPath
+      in: query
+      required: true
+      schema:
+        type: string
+  schemas:
+    MetaResponse:
+      type: object
+      required:
+        - version
+        - pairing
+        - workspace
+        - capabilities
+      properties:
+        version:
+          type: string
+        build:
+          type: object
+          properties:
+            commit:
+              type: string
+            date:
+              type: string
+              format: date-time
+        pairing:
+          $ref: '#/components/schemas/PairingState'
+        workspace:
+          $ref: '#/components/schemas/WorkspaceState'
+        capabilities:
+          $ref: '#/components/schemas/Capabilities'
+    PairingState:
+      type: object
+      required:
+        - required
+        - paired
+      properties:
+        required:
+          type: boolean
+        paired:
+          type: boolean
+    WorkspaceState:
+      type: object
+      required:
+        - configured
+      properties:
+        configured:
+          type: boolean
+        root:
+          type: string
+    Capabilities:
+      type: object
+      required:
+        - tools
+      properties:
+        tools:
+          type: object
+          properties:
+            git:
+              $ref: '#/components/schemas/ToolInfo'
+            node:
+              $ref: '#/components/schemas/ToolInfo'
+            npm:
+              $ref: '#/components/schemas/ToolInfo'
+            pnpm:
+              $ref: '#/components/schemas/ToolInfo'
+            yarn:
+              $ref: '#/components/schemas/ToolInfo'
+            code:
+              $ref: '#/components/schemas/ToolInfo'
+    ToolInfo:
+      type: object
+      required:
+        - installed
+      properties:
+        installed:
+          type: boolean
+        version:
+          type: string
+    PairRequest:
+      oneOf:
+        - $ref: '#/components/schemas/PairStartRequest'
+        - $ref: '#/components/schemas/PairConfirmRequest'
+      discriminator:
+        propertyName: step
+        mapping:
+          start: '#/components/schemas/PairStartRequest'
+          confirm: '#/components/schemas/PairConfirmRequest'
+    PairStartRequest:
+      type: object
+      required:
+        - step
+      properties:
+        step:
+          type: string
+          enum: [start]
+    PairConfirmRequest:
+      type: object
+      required:
+        - step
+        - code
+      properties:
+        step:
+          type: string
+          enum: [confirm]
+        code:
+          type: string
+    PairResponse:
+      oneOf:
+        - $ref: '#/components/schemas/PairStartResponse'
+        - $ref: '#/components/schemas/PairConfirmResponse'
+      discriminator:
+        propertyName: step
+        mapping:
+          start: '#/components/schemas/PairStartResponse'
+          confirm: '#/components/schemas/PairConfirmResponse'
+    PairStartResponse:
+      type: object
+      required:
+        - step
+        - instructions
+      properties:
+        step:
+          type: string
+          enum: [start]
+        instructions:
+          type: string
+        code:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+    PairConfirmResponse:
+      type: object
+      required:
+        - step
+        - accessToken
+        - tokenType
+        - expiresAt
+      properties:
+        step:
+          type: string
+          enum: [confirm]
+        accessToken:
+          type: string
+        tokenType:
+          type: string
+          enum: [Bearer]
+        expiresAt:
+          type: string
+          format: date-time
+    JobResponse:
+      type: object
+      required:
+        - jobId
+      properties:
+        jobId:
+          type: string
+    JobStatus:
+      type: object
+      required:
+        - id
+        - state
+      properties:
+        id:
+          type: string
+        state:
+          type: string
+          enum: [queued, running, done, error, cancelled]
+        createdAt:
+          type: string
+          format: date-time
+        startedAt:
+          type: string
+          format: date-time
+        finishedAt:
+          type: string
+          format: date-time
+        error:
+          $ref: '#/components/schemas/ErrorResponse'
+    GitCloneRequest:
+      type: object
+      required:
+        - repoUrl
+        - destRelative
+      properties:
+        repoUrl:
+          type: string
+        destRelative:
+          type: string
+        options:
+          type: object
+          properties:
+            branch:
+              type: string
+            depth:
+              type: integer
+              minimum: 1
+    GitFetchRequest:
+      type: object
+      required:
+        - repoPath
+      properties:
+        repoPath:
+          type: string
+        remote:
+          type: string
+          default: origin
+        prune:
+          type: boolean
+          default: false
+    GitStatus:
+      type: object
+      required:
+        - branch
+        - ahead
+        - behind
+        - stagedCount
+        - unstagedCount
+        - untrackedCount
+        - conflictsCount
+        - clean
+      properties:
+        branch:
+          type: string
+        ahead:
+          type: integer
+          minimum: 0
+        behind:
+          type: integer
+          minimum: 0
+        stagedCount:
+          type: integer
+          minimum: 0
+        unstagedCount:
+          type: integer
+          minimum: 0
+        untrackedCount:
+          type: integer
+          minimum: 0
+        conflictsCount:
+          type: integer
+          minimum: 0
+        clean:
+          type: boolean
+    OsOpenRequest:
+      type: object
+      required:
+        - target
+        - path
+      properties:
+        target:
+          type: string
+          enum: [folder, terminal, vscode]
+        path:
+          type: string
+    DepsInstallRequest:
+      type: object
+      required:
+        - repoPath
+      properties:
+        repoPath:
+          type: string
+        manager:
+          type: string
+          enum: [auto, npm, pnpm, yarn]
+          default: auto
+        mode:
+          type: string
+          enum: [auto, ci, install]
+          default: auto
+        safer:
+          type: boolean
+          default: true
+    CancelResponse:
+      type: object
+      required:
+        - accepted
+      properties:
+        accepted:
+          type: boolean
+    OkResponse:
+      type: object
+      required:
+        - ok
+      properties:
+        ok:
+          type: boolean
+    DiagnosticsResponse:
+      type: object
+      properties:
+        config:
+          type: object
+          description: Redacted config summary
+        recentErrors:
+          type: array
+          items:
+            type: object
+        jobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobStatus'
+        logTail:
+          type: array
+          items:
+            type: string
+    ErrorResponse:
+      type: object
+      required:
+        - errorCode
+        - message
+      properties:
+        errorCode:
+          type: string
+          enum:
+            - auth_required
+            - auth_invalid
+            - origin_not_allowed
+            - rate_limited
+            - request_too_large
+            - workspace_required
+            - path_outside_workspace
+            - invalid_repo_url
+            - capability_not_granted
+            - job_not_found
+            - timeout
+            - internal_error
+        message:
+          type: string
+        details:
+          type: object
+  responses:
+    Unauthorized:
+      description: Missing or invalid bearer token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: Origin not allowed or request denied
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Conflict:
+      description: Operation not allowed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    UnprocessableEntity:
+      description: Invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    RateLimited:
+      description: Rate limited
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalError:
+      description: Unexpected failure
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

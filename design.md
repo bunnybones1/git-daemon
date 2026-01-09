@@ -262,6 +262,7 @@ Meta response fields (examples):
 * `POST /v1/git/fetch` → job
 
   * body: `{ repoPath, remote?: "origin", prune?: true }`
+  * note: fetch updates remote tracking only; no merge/rebase is performed
 * `GET /v1/git/status?repoPath=...` → structured status
 
   * returns: `{ branch, ahead, behind, stagedCount, unstagedCount, untrackedCount, conflictsCount, clean }`
@@ -356,6 +357,11 @@ Each event is JSON:
 ### 2) Local UI + daemon (dev)
 
 Same, except UI origin is localhost and allowlisted.
+
+### Usage considerations
+
+* Provide a "Fetch" action that does not pull; use it to update ahead/behind indicators before any merge/rebase.
+* Avoid implicit pull; all merges/rebases should be explicit, user-driven actions.
 
 ---
 
