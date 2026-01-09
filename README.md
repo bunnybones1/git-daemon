@@ -1,5 +1,7 @@
 # Git Daemon
 
+![Git Daemon logo](logo.png)
+
 Git Daemon is a local Node.js service that exposes a small, authenticated HTTP API for a trusted web UI to perform Git and developer convenience actions on your machine. It is designed to run on `127.0.0.1` only, enforce a strict Origin allowlist, and sandbox all filesystem access to a configured workspace root.
 
 ## What it does
@@ -131,3 +133,11 @@ npm run lint
 ## API reference
 
 See `openapi.yaml` for the full contract.
+
+## UI developer resources
+
+This repo already includes the artifacts needed to build or test a UI client:
+
+- `openapi.yaml`: full HTTP contract (routes, schemas, error codes).
+- `design.md`: security model, runtime decisions, and behavior expectations.
+- `config.schema.json`: shape of the daemon config (useful for tooling or UI settings screens).
