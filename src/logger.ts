@@ -11,6 +11,9 @@ export const createLogger = async (
   logging: AppConfig["logging"],
   enabled = true,
 ): Promise<Logger> => {
+  const level = process.env.GIT_DAEMON_LOG_LEVEL || "info";
+  const logToStdout = process.env.GIT_DAEMON_LOG_STDOUT === "1";
+  const prettyStdout = logToStdout && process.env.GIT_DAEMON_LOG_PRETTY !== "0";
   const logDir = path.join(configDir, logging.directory);
   await fs.mkdir(logDir, { recursive: true });
 
@@ -20,7 +23,26 @@ export const createLogger = async (
     path: logDir,
   });
 
-  return pino({ enabled }, stream);
+  if (!logToStdout) {
+    return pino({ enabled, level }, stream);
+  }
+
+  const streams: Array<{ stream: NodeJS.WritableStream }> = [{ stream }];
+  if (prettyStdout) {
+    const { default: pretty } = await import("pino-pretty");
+    streams.push({
+      stream: pretty({
+        colorize: true,
+        translateTime: "SYS:standard",
+        ignore: "pid,hostname",
+      }),
+    });
+  } else {
+    streams.push({ stream: process.stdout });
+  }
+
+  return pino({ enabled, level }, (pino as any).multistream(streams));
 };
 
-export const createHttpLogger = (logger: Logger) => pinoHttp({ logger });
+export const createHttpLogger = (logger: Logger) =>
+  pinoHttp({ logger: logger as any });

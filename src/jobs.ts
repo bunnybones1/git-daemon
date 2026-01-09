@@ -1,6 +1,6 @@
 import { EventEmitter } from "events";
 import crypto from "crypto";
-import type { ApiErrorBody, JobEvent, JobState, JobStatus } from "./types";
+import type { ApiErrorBody, JobEvent, JobProgressEvent, JobState, JobStatus } from "./types";
 import { timeoutError } from "./errors";
 
 const MAX_EVENTS = 2000;
@@ -8,7 +8,7 @@ const MAX_EVENTS = 2000;
 export type JobContext = {
   logStdout: (line: string) => void;
   logStderr: (line: string) => void;
-  progress: (event: Omit<JobEvent, "type"> & { type?: "progress" }) => void;
+  progress: (event: Omit<JobProgressEvent, "type">) => void;
   setCancel: (cancel: () => Promise<void>) => void;
   isCancelled: () => boolean;
 };
@@ -157,7 +157,7 @@ export class JobManager {
     const ctx: JobContext = {
       logStdout: (line) => job.emit({ type: "log", stream: "stdout", line }),
       logStderr: (line) => job.emit({ type: "log", stream: "stderr", line }),
-      progress: (event) => job.emit({ ...event, type: "progress" }),
+      progress: (event) => job.emit({ type: "progress", ...event }),
       setCancel: (fn) => job.setCancel(fn),
       isCancelled: () => job.cancelRequested,
     };

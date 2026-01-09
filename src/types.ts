@@ -65,23 +65,26 @@ export type TokenStoreData = {
 
 export type JobState = "queued" | "running" | "done" | "error" | "cancelled";
 
-export type JobEvent =
-  | {
-      type: "log";
-      stream: "stdout" | "stderr";
-      line: string;
-    }
-  | {
-      type: "progress";
-      kind: "git" | "deps";
-      percent?: number;
-      detail?: string;
-    }
-  | {
-      type: "state";
-      state: JobState;
-      message?: string;
-    };
+export type JobLogEvent = {
+  type: "log";
+  stream: "stdout" | "stderr";
+  line: string;
+};
+
+export type JobProgressEvent = {
+  type: "progress";
+  kind: "git" | "deps";
+  percent?: number;
+  detail?: string;
+};
+
+export type JobStateEvent = {
+  type: "state";
+  state: JobState;
+  message?: string;
+};
+
+export type JobEvent = JobLogEvent | JobProgressEvent | JobStateEvent;
 
 export type JobStatus = {
   id: string;

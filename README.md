@@ -41,6 +41,12 @@ npm run daemon
 
 The daemon listens on `http://127.0.0.1:8790` by default.
 
+Verbose logging options:
+
+- `GIT_DAEMON_LOG_STDOUT=1` to mirror logs to stdout
+- `GIT_DAEMON_LOG_PRETTY=0` to disable pretty formatting when stdout is enabled
+- `GIT_DAEMON_LOG_LEVEL=debug` to increase verbosity
+
 ## Pairing flow
 
 Pairing is required before using protected endpoints.

@@ -39,11 +39,12 @@ export const runCommand = async (
     stderr: "pipe",
   });
 
-  if (subprocess.pid) {
+  const pid = subprocess.pid;
+  if (pid) {
     ctx.setCancel(
       () =>
         new Promise<void>((resolve) => {
-          treeKill(subprocess.pid, "SIGTERM", () => resolve());
+          treeKill(pid, "SIGTERM", () => resolve());
         }),
     );
   }
