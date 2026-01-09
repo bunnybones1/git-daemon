@@ -201,6 +201,8 @@ Capture output:
 * `env-paths` for OS-correct config directories.
 * `pino` + `pino-http` for structured logging.
 * `rotating-file-stream` for log rotation.
+* `vitest` for unit/integration testing.
+* `supertest` for HTTP API testing.
 
 ### CLI UX (local)
 
@@ -208,6 +210,14 @@ Capture output:
 * Use `ora` for status spinners and long-running task feedback.
 * Use `chalk` for readable, color-coded output.
 * Rationale: lightweight, simple to wire into a daemon with occasional user prompts.
+
+### Testing approach
+
+* Unit tests cover pure validation, path resolution, and policy checks (origins, workspace, capabilities).
+* Integration tests start the daemon on an ephemeral port and call HTTP endpoints via `supertest`.
+* Use temp directories for workspace roots and repos; never touch user paths.
+* Stub Git/deps commands where possible; allow a small set of opt-in, real-git tests behind a flag.
+* Validate SSE streams with deterministic event sequences for job lifecycles.
 
 ### Credential behavior (native)
 
