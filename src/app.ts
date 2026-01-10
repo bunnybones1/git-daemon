@@ -198,11 +198,34 @@ export const createApp = (ctx: DaemonContext) => {
         res.write(`data: ${JSON.stringify(event)}\n\n`);
       };
 
+      const isTerminalState = (event: unknown) => {
+        if (!event || typeof event !== "object") {
+          return false;
+        }
+        const record = event as { type?: string; state?: string };
+        return (
+          record.type === "state" &&
+          (record.state === "done" ||
+            record.state === "error" ||
+            record.state === "cancelled")
+        );
+      };
+
       for (const event of job.events) {
         sendEvent(event);
+        if (isTerminalState(event)) {
+          res.end();
+          return;
+        }
       }
 
-      const listener = (event: unknown) => sendEvent(event);
+      const listener = (event: unknown) => {
+        sendEvent(event);
+        if (isTerminalState(event)) {
+          job.emitter.off("event", listener);
+          res.end();
+        }
+      };
       job.emitter.on("event", listener);
 
       req.on("close", () => {

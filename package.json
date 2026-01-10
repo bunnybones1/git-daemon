@@ -7,8 +7,10 @@
   "scripts": {
     "build": "tsc",
     "daemon": "tsx src/daemon.ts",
+    "daemon:setup": "tsx src/setup.ts",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:clone": "tsx src/cli-test-clone.ts",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix"
   },

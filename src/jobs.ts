@@ -1,6 +1,12 @@
 import { EventEmitter } from "events";
 import crypto from "crypto";
-import type { ApiErrorBody, JobEvent, JobProgressEvent, JobState, JobStatus } from "./types";
+import type {
+  ApiErrorBody,
+  JobEvent,
+  JobProgressEvent,
+  JobState,
+  JobStatus,
+} from "./types";
 import { timeoutError } from "./errors";
 
 const MAX_EVENTS = 2000;

@@ -14,8 +14,13 @@ const start = async () => {
   };
   ctx.logger.info(startupSummary, "Git Daemon starting");
   if (process.env.GIT_DAEMON_LOG_STDOUT !== "1") {
+    console.log("[Git Daemon] Startup");
+    console.log(`  config: ${startupSummary.configDir}`);
+    console.log(`  host: ${startupSummary.host}`);
+    console.log(`  port: ${startupSummary.port}`);
+    console.log(`  workspace: ${startupSummary.workspaceRoot}`);
     console.log(
-      `[Git Daemon] config=${startupSummary.configDir} host=${startupSummary.host} port=${startupSummary.port}`,
+      `  allowlist: ${startupSummary.originAllowlist.join(", ") || "none"}`,
     );
   }
 

@@ -41,6 +41,27 @@ npm run daemon
 
 The daemon listens on `http://127.0.0.1:8790` by default.
 
+## Setup workspace root
+
+```bash
+npm run setup
+```
+
+This prompts for an absolute workspace root path and saves it to your config. The prompt reads from the terminal directly (via `/dev/tty` on macOS/Linux) so it still works in many IDE run configurations.
+For development, you can also run `npm run setup:dev`.
+
+Non-interactive setup (no TTY):
+
+```bash
+GIT_DAEMON_WORKSPACE_ROOT=/absolute/path npm run setup
+```
+
+Or:
+
+```bash
+npm run setup -- --workspace=/absolute/path
+```
+
 Verbose logging options:
 
 - `GIT_DAEMON_LOG_STDOUT=1` to mirror logs to stdout

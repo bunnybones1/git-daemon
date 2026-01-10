@@ -1,6 +1,6 @@
 import path from "path";
 import { promises as fs } from "fs";
-import pino from "pino";
+import pino, { multistream } from "pino";
 import pinoHttp from "pino-http";
 import type { Logger } from "pino";
 import { createStream } from "rotating-file-stream";
@@ -41,8 +41,8 @@ export const createLogger = async (
     streams.push({ stream: process.stdout });
   }
 
-  return pino({ enabled, level }, (pino as any).multistream(streams));
+  return pino({ enabled, level }, multistream(streams));
 };
 
 export const createHttpLogger = (logger: Logger) =>
-  pinoHttp({ logger: logger as any });
+  pinoHttp({ logger: logger as unknown as Logger });
