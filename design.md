@@ -64,6 +64,7 @@ These components are **not part of this project**; they are listed only to defin
 
    * Binds to `127.0.0.1` only
    * Implements a small HTTP JSON API + streaming logs (SSE)
+   * Optional HTTPS listener can be enabled alongside HTTP
    * Runs **system git** for native credentials & compatibility
    * Runs **package manager installs** in sandboxed repos
    * Provides OS integrations: open folder/terminal/VS Code
@@ -85,6 +86,7 @@ These components are **not part of this project**; they are listed only to defin
 #### 1) Bind to loopback only
 
 * Listen on `127.0.0.1:<daemonPort>` (not `0.0.0.0`)
+* HTTPS listener may also bind to loopback when enabled
 * Reject requests to non-loopback interfaces.
 
 #### 2) Origin allowlist (hard gate)

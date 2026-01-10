@@ -39,7 +39,8 @@ npm install
 npm run daemon
 ```
 
-The daemon listens on `http://127.0.0.1:8790` by default.
+The daemon listens on `http://127.0.0.1:8790` by default, and can also expose
+HTTPS on `https://127.0.0.1:8791` when enabled.
 
 ## HTTPS support
 
