@@ -44,5 +44,7 @@ export const createLogger = async (
   return pino({ enabled, level }, multistream(streams));
 };
 
+type PinoHttpOptions = Parameters<typeof pinoHttp>[0];
+
 export const createHttpLogger = (logger: Logger) =>
-  pinoHttp({ logger: logger as unknown as Logger });
+  pinoHttp({ logger } as unknown as PinoHttpOptions);

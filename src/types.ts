@@ -12,6 +12,12 @@ export type AppConfig = {
   server: {
     host: string;
     port: number;
+    https?: {
+      enabled?: boolean;
+      port?: number;
+      keyPath?: string;
+      certPath?: string;
+    };
   };
   originAllowlist: string[];
   workspaceRoot: string | null;

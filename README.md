@@ -41,6 +41,33 @@ npm run daemon
 
 The daemon listens on `http://127.0.0.1:8790` by default.
 
+## HTTPS support
+
+The daemon can also listen on HTTPS (with a locally-trusted certificate).
+
+Generate a local cert/key (requires `mkcert`):
+
+```bash
+npm run cert:local
+```
+
+Then update your config (example):
+
+```json
+{
+  "server": {
+    "host": "127.0.0.1",
+    "port": 8790,
+    "https": {
+      "enabled": true,
+      "port": 8791,
+      "keyPath": "/absolute/path/to/certs/localhost-key.pem",
+      "certPath": "/absolute/path/to/certs/localhost.pem"
+    }
+  }
+}
+```
+
 ## Setup workspace root
 
 ```bash

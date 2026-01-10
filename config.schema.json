@@ -36,6 +36,28 @@
           "minimum": 1,
           "maximum": 65535,
           "default": 8790
+        },
+        "https": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535,
+              "default": 8791
+            },
+            "keyPath": {
+              "type": "string"
+            },
+            "certPath": {
+              "type": "string"
+            }
+          }
         }
       }
     },

@@ -27,6 +27,10 @@ export const defaultConfig = (): AppConfig => ({
   server: {
     host: "127.0.0.1",
     port: 8790,
+    https: {
+      enabled: false,
+      port: 8791,
+    },
   },
   originAllowlist: ["https://app.example.com"],
   workspaceRoot: null,
@@ -66,6 +70,10 @@ export const loadConfig = async (configDir: string): Promise<AppConfig> => {
       server: {
         ...defaultConfig().server,
         ...data.server,
+        https: {
+          ...defaultConfig().server.https,
+          ...data.server?.https,
+        },
       },
       pairing: {
         ...defaultConfig().pairing,
