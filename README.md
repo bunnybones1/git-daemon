@@ -51,6 +51,7 @@ Generate a local cert/key (requires `mkcert`):
 npm run cert:local
 ```
 
+This writes certs under your daemon config directory (e.g. `~/Library/Preferences/Git Daemon/certs` on macOS).
 Then update your config (example):
 
 ```json
@@ -67,6 +68,9 @@ Then update your config (example):
   }
 }
 ```
+
+For HTTPS test clones, `npm run test:clone` auto-detects mkcert and sets
+`NODE_EXTRA_CA_CERTS` unless you disable it with `MKCERT_AUTO_TRUST=0`.
 
 ## Setup workspace root
 

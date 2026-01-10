@@ -10,7 +10,7 @@
     "daemon:setup": "tsx src/setup.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:clone": "tsx src/cli-test-clone.ts",
+    "test:clone": "bash scripts/test-clone.sh",
     "cert:local": "bash scripts/generate-local-cert.sh",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix"

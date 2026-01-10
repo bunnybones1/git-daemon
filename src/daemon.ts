@@ -3,6 +3,7 @@ import { createApp } from "./app";
 import http from "http";
 import https from "https";
 import { promises as fs } from "fs";
+import path from "path";
 
 const start = async () => {
   const ctx = await createContext();
@@ -59,9 +60,16 @@ const start = async () => {
         "HTTPS enabled but keyPath/certPath not configured in server.https.",
       );
     }
+    const keyPath = path.isAbsolute(httpsConfig.keyPath)
+      ? httpsConfig.keyPath
+      : path.join(ctx.configDir, httpsConfig.keyPath);
+    const certPath = path.isAbsolute(httpsConfig.certPath)
+      ? httpsConfig.certPath
+      : path.join(ctx.configDir, httpsConfig.certPath);
+
     const [key, cert] = await Promise.all([
-      fs.readFile(httpsConfig.keyPath),
-      fs.readFile(httpsConfig.certPath),
+      fs.readFile(keyPath),
+      fs.readFile(certPath),
     ]);
     const httpsServer = https.createServer({ key, cert }, app);
     httpsServer.on("error", (err) => {
