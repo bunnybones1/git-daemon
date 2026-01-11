@@ -176,6 +176,10 @@ Key settings live in `config.json`:
 
 Tokens are stored (hashed) in `tokens.json`. Logs are written under the configured `logging.directory` with rotation.
 
+Approvals can be scoped per repo or origin-wide. To allow a capability for all repos
+from an origin, set `"repoPath": null` in an approvals entry. When a TTY is
+available, the daemon will prompt for approval on first use.
+
 ## Development
 
 Run tests:

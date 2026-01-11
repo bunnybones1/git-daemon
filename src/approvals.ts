@@ -13,10 +13,13 @@ export const hasApproval = (
     if (entry.origin !== origin || !entry.capabilities.includes(capability)) {
       return false;
     }
+    if (entry.repoPath === null || entry.repoPath === "*") {
+      return true;
+    }
     if (entry.repoPath === repoPath) {
       return true;
     }
-    if (workspaceRoot && !path.isAbsolute(entry.repoPath)) {
+    if (workspaceRoot && entry.repoPath && !path.isAbsolute(entry.repoPath)) {
       return path.resolve(workspaceRoot, entry.repoPath) === repoPath;
     }
     return false;

@@ -3,7 +3,9 @@ import rateLimit from "express-rate-limit";
 import type { Logger } from "pino";
 import type { Request, Response, NextFunction } from "express";
 import { promises as fs } from "fs";
+import * as fsSync from "fs";
 import path from "path";
+import readline from "readline";
 import { createHttpLogger } from "./logger";
 import type { AppConfig, Capabilities } from "./types";
 import {
@@ -48,7 +50,8 @@ import { openTarget } from "./os";
 import type { TokenStore } from "./tokens";
 import type { PairingManager } from "./pairing";
 import type { JobManager } from "./jobs";
-import { requireApproval } from "./approvals";
+import { hasApproval, requireApproval } from "./approvals";
+import { saveConfig } from "./config";
 
 export type DaemonContext = {
   config: AppConfig;
@@ -365,8 +368,8 @@ export const createApp = (ctx: DaemonContext) => {
       );
 
       if (payload.target === "terminal") {
-        requireApproval(
-          ctx.config,
+        await ensureApproval(
+          ctx,
           origin,
           resolved,
           "open-terminal",
@@ -374,8 +377,8 @@ export const createApp = (ctx: DaemonContext) => {
         );
       }
       if (payload.target === "vscode") {
-        requireApproval(
-          ctx.config,
+        await ensureApproval(
+          ctx,
           origin,
           resolved,
           "open-vscode",
@@ -411,8 +414,8 @@ export const createApp = (ctx: DaemonContext) => {
         } catch {
           throw repoNotFound();
         }
-        requireApproval(
-          ctx.config,
+        await ensureApproval(
+          ctx,
           origin,
           resolved,
           "deps/install",
@@ -462,8 +465,22 @@ export const createApp = (ctx: DaemonContext) => {
     }
   });
 
-  app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+  app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
     if (err instanceof ApiError) {
+      if (err.status === 409) {
+        console.warn(
+          `[Git Daemon] 409 ${err.body.errorCode} ${req.method} ${req.originalUrl} origin=${req.headers.origin ?? ""}`,
+        );
+        ctx.logger.warn(
+          {
+            errorCode: err.body.errorCode,
+            method: req.method,
+            path: req.originalUrl,
+            origin: req.headers.origin,
+          },
+          "Request rejected with conflict",
+        );
+      }
       res.status(err.status).json(err.body);
       return;
     }
@@ -479,4 +496,87 @@ export const createApp = (ctx: DaemonContext) => {
   });
 
   return app;
+};
+
+const ensureApproval = async (
+  ctx: DaemonContext,
+  origin: string,
+  repoPath: string,
+  capability: "open-terminal" | "open-vscode" | "deps/install",
+  workspaceRoot?: string | null,
+) => {
+  if (hasApproval(ctx.config, origin, repoPath, capability, workspaceRoot)) {
+    return;
+  }
+  const approved = await promptApproval(origin, repoPath, capability);
+  if (!approved) {
+    requireApproval(ctx.config, origin, repoPath, capability, workspaceRoot);
+    return;
+  }
+  upsertOriginApproval(ctx, origin, capability);
+  await saveConfig(ctx.configDir, ctx.config);
+};
+
+const createPromptInterface = () => {
+  if (process.stdin.isTTY && process.stdout.isTTY) {
+    return readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+  }
+  const ttyPath = process.platform === "win32" ? "CON" : "/dev/tty";
+  try {
+    const input = fsSync.createReadStream(ttyPath, { encoding: "utf8" });
+    const output = fsSync.createWriteStream(ttyPath);
+    return readline.createInterface({ input, output });
+  } catch {
+    return null;
+  }
+};
+
+const askQuestion = (rl: readline.Interface, question: string) =>
+  new Promise<string>((resolve) => {
+    rl.question(question, (answer) => resolve(answer));
+  });
+
+const promptApproval = async (
+  origin: string,
+  repoPath: string,
+  capability: string,
+) => {
+  const rl = createPromptInterface();
+  if (!rl) {
+    return false;
+  }
+  const answer = await askQuestion(
+    rl,
+    `Approve ${capability} for origin ${origin} (all repos)? [y/N] Requested path: ${repoPath} `,
+  );
+  rl.close();
+  const normalized = answer.trim().toLowerCase();
+  return normalized === "y" || normalized === "yes";
+};
+
+const upsertOriginApproval = (
+  ctx: DaemonContext,
+  origin: string,
+  capability: "open-terminal" | "open-vscode" | "deps/install",
+) => {
+  const existing = ctx.config.approvals.entries.find(
+    (entry) =>
+      entry.origin === origin &&
+      (entry.repoPath === null || entry.repoPath === "*"),
+  );
+  if (existing) {
+    if (!existing.capabilities.includes(capability)) {
+      existing.capabilities.push(capability);
+    }
+    return;
+  }
+  ctx.config.approvals.entries.push({
+    origin,
+    repoPath: null,
+    capabilities: [capability],
+    approvedAt: new Date().toISOString(),
+  });
 };

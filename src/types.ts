@@ -2,7 +2,7 @@ export type Capability = "open-terminal" | "open-vscode" | "deps/install";
 
 export type ApprovalEntry = {
   origin: string;
-  repoPath: string;
+  repoPath: string | null;
   capabilities: Capability[];
   approvedAt: string;
 };
