@@ -56,6 +56,11 @@ export const gitStatusQuerySchema = z.object({
   repoPath: z.string().min(1).max(MAX_PATH_LENGTH),
 });
 
+export const gitBranchesQuerySchema = z.object({
+  repoPath: z.string().min(1).max(MAX_PATH_LENGTH),
+  includeRemote: z.enum(["true", "false"]).optional(),
+});
+
 export const osOpenRequestSchema = z.object({
   target: z.enum(["folder", "terminal", "vscode"]),
   path: z.string().min(1).max(MAX_PATH_LENGTH),

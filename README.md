@@ -7,7 +7,7 @@ Git Daemon is a local Node.js service that exposes a small, authenticated HTTP A
 
 ## What it does
 
-- Clone, fetch, and read Git status using your system Git credentials
+- Clone, fetch, list branches, and read Git status using your system Git credentials
 - Stream long-running job logs via Server-Sent Events (SSE)
 - Open a repo in the OS file browser, terminal, or VS Code (with approvals)
 - Install dependencies with safer defaults (`--ignore-scripts` by default)
@@ -24,7 +24,7 @@ Git Daemon is a local Node.js service that exposes a small, authenticated HTTP A
 ## Requirements
 
 - Node.js (for running the daemon)
-- Git (for clone/fetch/status)
+- Git (for clone/fetch/branches/status)
 - Optional: `code` CLI for VS Code, `pnpm`/`yarn` for dependency installs
 
 ## Install
@@ -151,6 +151,14 @@ curl -N \
   -H "Origin: https://app.example.com" \
   -H "Authorization: Bearer <TOKEN>" \
   http://127.0.0.1:8790/v1/jobs/<JOB_ID>/stream
+```
+
+List branches (local + remote by default):
+
+```bash
+curl -H "Origin: https://app.example.com" \
+  -H "Authorization: Bearer <TOKEN>" \
+  "http://127.0.0.1:8790/v1/git/branches?repoPath=owner/repo"
 ```
 
 ## Configuration

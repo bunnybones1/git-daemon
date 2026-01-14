@@ -182,6 +182,32 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         '500':
           $ref: '#/components/responses/InternalError'
+  /v1/git/branches:
+    get:
+      summary: List repository branches
+      parameters:
+        - $ref: '#/components/parameters/OriginHeader'
+        - $ref: '#/components/parameters/RepoPath'
+        - $ref: '#/components/parameters/IncludeRemote'
+      responses:
+        '200':
+          description: Repository branches
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GitBranchesResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalError'
   /v1/git/status:
     get:
       summary: Get repository status
@@ -309,6 +335,13 @@ components:
       required: true
       schema:
         type: string
+    IncludeRemote:
+      name: includeRemote
+      in: query
+      required: false
+      schema:
+        type: boolean
+        default: true
   schemas:
     MetaResponse:
       type: object
@@ -548,6 +581,34 @@ components:
           minimum: 0
         clean:
           type: boolean
+    GitBranchesResponse:
+      type: object
+      required:
+        - branches
+      properties:
+        branches:
+          type: array
+          items:
+            $ref: '#/components/schemas/GitBranch'
+    GitBranch:
+      type: object
+      required:
+        - name
+        - fullName
+        - type
+        - current
+      properties:
+        name:
+          type: string
+        fullName:
+          type: string
+        type:
+          type: string
+          enum: [local, remote]
+        current:
+          type: boolean
+        upstream:
+          type: string
     OsOpenRequest:
       type: object
       required:

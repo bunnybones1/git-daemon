@@ -4,6 +4,7 @@ import path from "path";
 import os from "os";
 import { promises as fs } from "fs";
 import pino from "pino";
+import { execa } from "execa";
 import { createApp, type DaemonContext } from "../src/app";
 import { TokenStore } from "../src/tokens";
 import { PairingManager } from "../src/pairing";
@@ -12,6 +13,32 @@ import type { AppConfig } from "../src/types";
 
 const createTempDir = async () =>
   fs.mkdtemp(path.join(os.tmpdir(), "git-daemon-test-"));
+
+const runGit = async (cwd: string, args: string[]) => {
+  await execa("git", args, { cwd });
+};
+
+const setupRepoWithRemote = async (workspaceRoot: string) => {
+  const repoDir = path.join(workspaceRoot, "repo");
+  const remoteDir = path.join(workspaceRoot, "remote.git");
+  await fs.mkdir(repoDir, { recursive: true });
+  await runGit(repoDir, ["init", "-b", "main"]);
+  await runGit(repoDir, ["config", "user.email", "test@example.com"]);
+  await runGit(repoDir, ["config", "user.name", "Test User"]);
+  await fs.writeFile(path.join(repoDir, "README.md"), "hello");
+  await runGit(repoDir, ["add", "README.md"]);
+  await runGit(repoDir, ["commit", "-m", "init"]);
+  await runGit(workspaceRoot, ["init", "--bare", remoteDir]);
+  await runGit(repoDir, ["remote", "add", "origin", remoteDir]);
+  await runGit(repoDir, ["push", "-u", "origin", "main"]);
+  await runGit(repoDir, ["checkout", "-b", "feature"]);
+  await fs.writeFile(path.join(repoDir, "feature.txt"), "feature");
+  await runGit(repoDir, ["add", "feature.txt"]);
+  await runGit(repoDir, ["commit", "-m", "feature"]);
+  await runGit(repoDir, ["push", "-u", "origin", "feature"]);
+  await runGit(repoDir, ["fetch", "origin"]);
+  return { repoPath: "repo" };
+};
 
 const createConfig = (
   workspaceRoot: string | null,
@@ -118,5 +145,39 @@ describe("Git Daemon API", () => {
 
     expect(res.status).toBe(422);
     expect(res.body.errorCode).toBe("invalid_repo_url");
+  });
+
+  it("lists branches including remotes by default", async () => {
+    const workspaceRoot = await createTempDir();
+    const { repoPath } = await setupRepoWithRemote(workspaceRoot);
+    const { app, ctx } = await createContext(workspaceRoot, origin);
+    const { token } = await ctx.tokenStore.issueToken(origin, 30);
+
+    const res = await request(app)
+      .get("/v1/git/branches")
+      .query({ repoPath })
+      .set("Origin", origin)
+      .set("Host", "127.0.0.1")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    const branches = res.body.branches as Array<{
+      name: string;
+      type: "local" | "remote";
+      current: boolean;
+    }>;
+    const names = branches.map((branch) => branch.name);
+    expect(names).toEqual(
+      expect.arrayContaining([
+        "main",
+        "feature",
+        "origin/main",
+        "origin/feature",
+      ]),
+    );
+    const current = branches.find((branch) => branch.current);
+    expect(current?.name).toBe("feature");
+    const originMain = branches.find((branch) => branch.name === "origin/main");
+    expect(originMain?.type).toBe("remote");
   });
 });

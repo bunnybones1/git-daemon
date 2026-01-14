@@ -15,6 +15,14 @@ export type GitStatus = {
   clean: boolean;
 };
 
+export type GitBranch = {
+  name: string;
+  fullName: string;
+  type: "local" | "remote";
+  current: boolean;
+  upstream?: string;
+};
+
 export class RepoNotFoundError extends Error {}
 
 export const cloneRepo = async (
@@ -74,6 +82,28 @@ export const getRepoStatus = async (
     "-b",
   ]);
   return parseStatus(result.stdout);
+};
+
+export const listRepoBranches = async (
+  workspaceRoot: string,
+  repoPath: string,
+  options?: { includeRemote?: boolean },
+): Promise<GitBranch[]> => {
+  const resolved = await resolveRepoPath(workspaceRoot, repoPath);
+  const includeRemote = options?.includeRemote ?? true;
+  const { execa } = await import("execa");
+  const refs = ["refs/heads"];
+  if (includeRemote) {
+    refs.push("refs/remotes");
+  }
+  const result = await execa("git", [
+    "-C",
+    resolved,
+    "for-each-ref",
+    "--format=%(refname)\t%(refname:short)\t%(objectname)\t%(HEAD)\t%(upstream:short)",
+    ...refs,
+  ]);
+  return parseBranches(result.stdout);
 };
 
 export const resolveRepoPath = async (
@@ -157,4 +187,33 @@ const parseStatus = (output: string): GitStatus => {
     conflictsCount,
     clean,
   };
+};
+
+const parseBranches = (output: string): GitBranch[] => {
+  const branches: GitBranch[] = [];
+  const lines = output.split(/\r?\n/);
+  for (const line of lines) {
+    if (!line) {
+      continue;
+    }
+    const [fullName, shortName, , headFlag, upstream] = line.split("\t");
+    if (!fullName || !shortName) {
+      continue;
+    }
+    if (fullName.startsWith("refs/remotes/") && fullName.endsWith("/HEAD")) {
+      continue;
+    }
+    const type = fullName.startsWith("refs/heads/") ? "local" : "remote";
+    const branch: GitBranch = {
+      name: shortName,
+      fullName,
+      type,
+      current: headFlag === "*",
+    };
+    if (upstream) {
+      branch.upstream = upstream;
+    }
+    branches.push(branch);
+  }
+  return branches;
 };

@@ -20,6 +20,7 @@ The daemon exposes a **localhost HTTP API** guarded by:
 * Provide additional local dev actions:
 
   * `fetch`
+  * `branches`
   * `status`
   * open folder / terminal / VS Code
   * run dependency installation (`npm i` / pnpm / yarn)
@@ -275,6 +276,10 @@ Meta response fields (examples):
 
   * body: `{ repoPath, remote?: "origin", prune?: true }`
   * note: fetch updates remote tracking only; no merge/rebase is performed
+* `GET /v1/git/branches?repoPath=...&includeRemote=true` → branch list
+
+  * returns: `{ branches: [{ name, fullName, type: "local"|"remote", current, upstream? }] }`
+  * `includeRemote` defaults to `true` and includes remote tracking branches (e.g. `origin/main`)
 * `GET /v1/git/status?repoPath=...` → structured status
 
   * returns: `{ branch, ahead, behind, stagedCount, unstagedCount, untrackedCount, conflictsCount, clean }`
@@ -472,7 +477,7 @@ Recommended `errorCode` values:
 ## Future Extensions
 
 * Repo registry: “known repos” list for safer operations and better UX
-* `git pull`, `checkout`, `branch list`, `log` endpoints
+* `git pull`, `checkout`, `log` endpoints
 * Support multiple terminals/editors
 * Signed request challenge (HMAC) in addition to bearer token
 

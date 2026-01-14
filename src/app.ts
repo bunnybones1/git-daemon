@@ -28,6 +28,7 @@ import {
   pairRequestSchema,
   gitCloneRequestSchema,
   gitFetchRequestSchema,
+  gitBranchesQuerySchema,
   gitStatusQuerySchema,
   osOpenRequestSchema,
   depsInstallRequestSchema,
@@ -41,6 +42,7 @@ import {
 import {
   cloneRepo,
   fetchRepo,
+  listRepoBranches,
   getRepoStatus,
   RepoNotFoundError,
   resolveRepoPath,
@@ -322,6 +324,35 @@ export const createApp = (ctx: DaemonContext) => {
           );
         });
         res.status(202).json({ jobId: job.id });
+      } catch (err) {
+        if (
+          err instanceof RepoNotFoundError ||
+          err instanceof MissingPathError
+        ) {
+          next(repoNotFound());
+          return;
+        }
+        next(err);
+      }
+    },
+  );
+
+  app.get(
+    "/v1/git/branches",
+    authGuard(ctx.tokenStore),
+    async (req, res, next) => {
+      try {
+        const payload = parseBody(gitBranchesQuerySchema, req.query);
+        const workspaceRoot = ensureWorkspaceRoot(ctx.config.workspaceRoot);
+        const includeRemote = payload.includeRemote !== "false";
+        const branches = await listRepoBranches(
+          workspaceRoot,
+          payload.repoPath,
+          {
+            includeRemote,
+          },
+        );
+        res.json({ branches });
       } catch (err) {
         if (
           err instanceof RepoNotFoundError ||
