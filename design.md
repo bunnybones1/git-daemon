@@ -280,6 +280,10 @@ Meta response fields (examples):
 
   * returns: `{ branches: [{ name, fullName, type: "local"|"remote", current, upstream? }] }`
   * `includeRemote` defaults to `true` and includes remote tracking branches (e.g. `origin/main`)
+* `GET /v1/git/summary?repoPath=...` → status summary for UI badges/tooltips
+
+  * returns: `{ repoPath, exists, branch, upstream, ahead, behind, dirty, staged, unstaged, untracked, conflicts, detached }`
+  * if repo is missing, `exists` is `false` with zeroed counts
 * `GET /v1/git/status?repoPath=...` → structured status
 
   * returns: `{ branch, ahead, behind, stagedCount, unstagedCount, untrackedCount, conflictsCount, clean }`

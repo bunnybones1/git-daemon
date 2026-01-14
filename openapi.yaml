@@ -208,6 +208,29 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         '500':
           $ref: '#/components/responses/InternalError'
+  /v1/git/summary:
+    get:
+      summary: Get repository status summary
+      parameters:
+        - $ref: '#/components/parameters/OriginHeader'
+        - $ref: '#/components/parameters/RepoPath'
+      responses:
+        '200':
+          description: Repository status summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GitSummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalError'
   /v1/git/status:
     get:
       summary: Get repository status
@@ -580,6 +603,53 @@ components:
           type: integer
           minimum: 0
         clean:
+          type: boolean
+    GitSummary:
+      type: object
+      required:
+        - repoPath
+        - exists
+        - branch
+        - upstream
+        - ahead
+        - behind
+        - dirty
+        - staged
+        - unstaged
+        - untracked
+        - conflicts
+        - detached
+      properties:
+        repoPath:
+          type: string
+        exists:
+          type: boolean
+        branch:
+          type: string
+        upstream:
+          type: string
+          nullable: true
+        ahead:
+          type: integer
+          minimum: 0
+        behind:
+          type: integer
+          minimum: 0
+        dirty:
+          type: boolean
+        staged:
+          type: integer
+          minimum: 0
+        unstaged:
+          type: integer
+          minimum: 0
+        untracked:
+          type: integer
+          minimum: 0
+        conflicts:
+          type: integer
+          minimum: 0
+        detached:
           type: boolean
     GitBranchesResponse:
       type: object

@@ -23,6 +23,33 @@ export type GitBranch = {
   upstream?: string;
 };
 
+export type GitSummary = {
+  repoPath: string;
+  exists: boolean;
+  branch: string;
+  upstream: string | null;
+  ahead: number;
+  behind: number;
+  dirty: boolean;
+  staged: number;
+  unstaged: number;
+  untracked: number;
+  conflicts: number;
+  detached: boolean;
+};
+
+type GitStatusInfo = {
+  branch: string;
+  upstream: string | null;
+  ahead: number;
+  behind: number;
+  stagedCount: number;
+  unstagedCount: number;
+  untrackedCount: number;
+  conflictsCount: number;
+  detached: boolean;
+};
+
 export class RepoNotFoundError extends Error {}
 
 export const cloneRepo = async (
@@ -84,6 +111,42 @@ export const getRepoStatus = async (
   return parseStatus(result.stdout);
 };
 
+export const getRepoSummary = async (
+  workspaceRoot: string,
+  repoPath: string,
+): Promise<GitSummary> => {
+  const resolved = await resolveRepoPath(workspaceRoot, repoPath);
+  const { execa } = await import("execa");
+  const result = await execa("git", [
+    "-C",
+    resolved,
+    "status",
+    "--porcelain=2",
+    "-b",
+  ]);
+  const info = parseStatusInfo(result.stdout);
+  const dirty =
+    info.stagedCount > 0 ||
+    info.unstagedCount > 0 ||
+    info.untrackedCount > 0 ||
+    info.conflictsCount > 0;
+  const upstream = info.detached ? null : info.upstream;
+  return {
+    repoPath,
+    exists: true,
+    branch: info.branch,
+    upstream,
+    ahead: upstream ? info.ahead : 0,
+    behind: upstream ? info.behind : 0,
+    dirty,
+    staged: info.stagedCount,
+    unstaged: info.unstagedCount,
+    untracked: info.untrackedCount,
+    conflicts: info.conflictsCount,
+    detached: info.detached,
+  };
+};
+
 export const listRepoBranches = async (
   workspaceRoot: string,
   repoPath: string,
@@ -129,7 +192,29 @@ const assertRepoExists = async (repoPath: string) => {
 };
 
 const parseStatus = (output: string): GitStatus => {
-  let branch = "";
+  const info = parseStatusInfo(output);
+  const clean =
+    info.stagedCount === 0 &&
+    info.unstagedCount === 0 &&
+    info.untrackedCount === 0 &&
+    info.conflictsCount === 0;
+
+  return {
+    branch: info.branch,
+    ahead: info.ahead,
+    behind: info.behind,
+    stagedCount: info.stagedCount,
+    unstagedCount: info.unstagedCount,
+    untrackedCount: info.untrackedCount,
+    conflictsCount: info.conflictsCount,
+    clean,
+  };
+};
+
+const parseStatusInfo = (output: string): GitStatusInfo => {
+  let head = "";
+  let oid = "";
+  let upstream: string | null = null;
   let ahead = 0;
   let behind = 0;
   let stagedCount = 0;
@@ -140,7 +225,16 @@ const parseStatus = (output: string): GitStatus => {
   const lines = output.split(/\r?\n/);
   for (const line of lines) {
     if (line.startsWith("# branch.head")) {
-      branch = line.split(" ").slice(2).join(" ").trim();
+      head = line.split(" ").slice(2).join(" ").trim();
+      continue;
+    }
+    if (line.startsWith("# branch.oid")) {
+      oid = line.split(" ").slice(2).join(" ").trim();
+      continue;
+    }
+    if (line.startsWith("# branch.upstream")) {
+      const value = line.split(" ").slice(2).join(" ").trim();
+      upstream = value.length > 0 ? value : null;
       continue;
     }
     if (line.startsWith("# branch.ab")) {
@@ -171,21 +265,23 @@ const parseStatus = (output: string): GitStatus => {
     }
   }
 
-  const clean =
-    stagedCount === 0 &&
-    unstagedCount === 0 &&
-    untrackedCount === 0 &&
-    conflictsCount === 0;
+  const detached = head === "(detached)";
+  let branch = head;
+  if (detached) {
+    branch = oid || head;
+    upstream = null;
+  }
 
   return {
     branch,
+    upstream,
     ahead,
     behind,
     stagedCount,
     unstagedCount,
     untrackedCount,
     conflictsCount,
-    clean,
+    detached,
   };
 };
 

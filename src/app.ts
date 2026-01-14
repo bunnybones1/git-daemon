@@ -29,6 +29,7 @@ import {
   gitCloneRequestSchema,
   gitFetchRequestSchema,
   gitBranchesQuerySchema,
+  gitSummaryQuerySchema,
   gitStatusQuerySchema,
   osOpenRequestSchema,
   depsInstallRequestSchema,
@@ -43,6 +44,7 @@ import {
   cloneRepo,
   fetchRepo,
   listRepoBranches,
+  getRepoSummary,
   getRepoStatus,
   RepoNotFoundError,
   resolveRepoPath,
@@ -359,6 +361,43 @@ export const createApp = (ctx: DaemonContext) => {
           err instanceof MissingPathError
         ) {
           next(repoNotFound());
+          return;
+        }
+        next(err);
+      }
+    },
+  );
+
+  app.get(
+    "/v1/git/summary",
+    authGuard(ctx.tokenStore),
+    async (req, res, next) => {
+      let payload: { repoPath: string } | undefined;
+      try {
+        payload = parseBody(gitSummaryQuerySchema, req.query);
+        const workspaceRoot = ensureWorkspaceRoot(ctx.config.workspaceRoot);
+        const summary = await getRepoSummary(workspaceRoot, payload.repoPath);
+        res.json(summary);
+      } catch (err) {
+        if (
+          (err instanceof RepoNotFoundError ||
+            err instanceof MissingPathError) &&
+          payload
+        ) {
+          res.json({
+            repoPath: payload.repoPath,
+            exists: false,
+            branch: "",
+            upstream: null,
+            ahead: 0,
+            behind: 0,
+            dirty: false,
+            staged: 0,
+            unstaged: 0,
+            untracked: 0,
+            conflicts: 0,
+            detached: false,
+          });
           return;
         }
         next(err);

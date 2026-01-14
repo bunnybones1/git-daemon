@@ -56,6 +56,10 @@ export const gitStatusQuerySchema = z.object({
   repoPath: z.string().min(1).max(MAX_PATH_LENGTH),
 });
 
+export const gitSummaryQuerySchema = z.object({
+  repoPath: z.string().min(1).max(MAX_PATH_LENGTH),
+});
+
 export const gitBranchesQuerySchema = z.object({
   repoPath: z.string().min(1).max(MAX_PATH_LENGTH),
   includeRemote: z.enum(["true", "false"]).optional(),

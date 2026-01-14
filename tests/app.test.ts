@@ -180,4 +180,54 @@ describe("Git Daemon API", () => {
     const originMain = branches.find((branch) => branch.name === "origin/main");
     expect(originMain?.type).toBe("remote");
   });
+
+  it("returns a UI-friendly status summary", async () => {
+    const workspaceRoot = await createTempDir();
+    const { repoPath } = await setupRepoWithRemote(workspaceRoot);
+    const repoDir = path.join(workspaceRoot, repoPath);
+    await fs.writeFile(path.join(repoDir, "scratch.txt"), "dirty");
+    const { app, ctx } = await createContext(workspaceRoot, origin);
+    const { token } = await ctx.tokenStore.issueToken(origin, 30);
+
+    const res = await request(app)
+      .get("/v1/git/summary")
+      .query({ repoPath })
+      .set("Origin", origin)
+      .set("Host", "127.0.0.1")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.repoPath).toBe(repoPath);
+    expect(res.body.exists).toBe(true);
+    expect(res.body.branch).toBe("feature");
+    expect(res.body.upstream).toBe("origin/feature");
+    expect(res.body.ahead).toBe(0);
+    expect(res.body.behind).toBe(0);
+    expect(res.body.dirty).toBe(true);
+    expect(res.body.untracked).toBe(1);
+    expect(res.body.staged).toBe(0);
+    expect(res.body.unstaged).toBe(0);
+    expect(res.body.conflicts).toBe(0);
+    expect(res.body.detached).toBe(false);
+  });
+
+  it("returns exists false when summary repo is missing", async () => {
+    const workspaceRoot = await createTempDir();
+    const { app, ctx } = await createContext(workspaceRoot, origin);
+    const { token } = await ctx.tokenStore.issueToken(origin, 30);
+
+    const res = await request(app)
+      .get("/v1/git/summary")
+      .query({ repoPath: "missing" })
+      .set("Origin", origin)
+      .set("Host", "127.0.0.1")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.exists).toBe(false);
+    expect(res.body.branch).toBe("");
+    expect(res.body.dirty).toBe(false);
+    expect(res.body.ahead).toBe(0);
+    expect(res.body.behind).toBe(0);
+  });
 });
